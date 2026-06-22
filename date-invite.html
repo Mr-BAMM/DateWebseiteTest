@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <meta name="theme-color" content="#52b788">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>An Important Question... 🐸</title>
+    <link rel="preload" as="image" href="images/bg-pond.png">
+    <link rel="preload" as="image" href="images/frog-happy.png">
+    <link rel="preload" as="image" href="images/frog-sad.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* Fixed pond background — avoids iOS fixed-attachment bug */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: url('images/bg-pond.png') center 35% / cover;
+            background-color: #52b788;
+            z-index: -1;
+        }
+
+        body {
+            font-family: 'Nunito', 'Segoe UI', sans-serif;
+            min-height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding-top: max(24px, env(safe-area-inset-top));
+            padding-right: max(16px, env(safe-area-inset-right));
+            padding-bottom: max(40px, env(safe-area-inset-bottom));
+            padding-left: max(16px, env(safe-area-inset-left));
+            background-color: #52b788;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior-y: none;
+            -webkit-font-smoothing: antialiased;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* ── SCENE WRAPPER ── */
+        .scene {
+            width: 100%;
+            max-width: 420px;
+            touch-action: pan-y;
+        }
+
+        /* ── PAGE TRANSITIONS ── */
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.4s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── SPEECH BUBBLE (page 1) ── */
+        .speech-bubble {
+            display: none;
+            background: #fff;
+            border: 3px solid #40916c;
+            border-radius: 18px;
+            padding: 10px 18px;
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: #1B5E20;
+            text-align: center;
+            margin: 0 auto 10px;
+            max-width: 290px;
+            position: relative;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.14);
+        }
+        .speech-bubble.visible {
+            display: block;
+            animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards;
+        }
+        /* Arrow pointing down toward frog */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -11px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 9px solid transparent;
+            border-top-color: #40916c;
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.4); opacity: 0; }
+            to   { transform: scale(1);   opacity: 1; }
+        }
+
+        /* ── CHARACTER IMAGES ── */
+        .char-wrap {
+            display: flex;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            pointer-events: none; /* never block button clicks */
+        }
+        .char-wrap img {
+            animation: frogBob 2.8s ease-in-out infinite alternate;
+        }
+
+        /* Single frog (page 1) */
+        .char-wrap.solo { margin-bottom: -70px; }
+        .char-wrap.solo img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+        }
+
+        /* Duo frogs (pages 2-4) */
+        .char-wrap.duo { margin-bottom: -26px; }
+        .char-wrap.duo img {
+            width: 92%;
+            max-width: 340px;
+            height: 130px;
+            object-fit: cover;
+        }
+
+        #page-2 .char-wrap.duo img { object-position: center top; }
+
+        /* Pages 3 & 4: frogs fixed at lower third of viewport, sitting on the pond */
+        #page-3 .card.duo,
+        #page-4 .card.duo { padding-top: 22px; }
+
+        #page-3 .char-wrap.duo,
+        #page-4 .char-wrap.duo {
+            position: fixed;
+            bottom: 12%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 420px;
+            margin: 0;
+        }
+        #page-3 .char-wrap.duo img,
+        #page-4 .char-wrap.duo img { object-position: center 40%; }
+
+        @keyframes frogBob {
+            from { transform: translateY(0px); }
+            to   { transform: translateY(-9px); }
+        }
+
+        @keyframes frogJump {
+            0%   { transform: translateY(0)     scale(1,    1);    }
+            12%  { transform: translateY(-4px)  scale(1.06, 0.94); }
+            30%  { transform: translateY(-42px) scale(0.92, 1.08); }
+            52%  { transform: translateY(-18px) scale(0.95, 1.05); }
+            65%  { transform: translateY(0)     scale(1.10, 0.90); }
+            76%  { transform: translateY(-14px) scale(0.96, 1.04); }
+            86%  { transform: translateY(0)     scale(1.05, 0.95); }
+            93%  { transform: translateY(-5px)  scale(0.99, 1.01); }
+            100% { transform: translateY(0)     scale(1,    1);    }
+        }
+
+        /* ── CARD ── */
+        .card {
+            background: #FFF8EE;
+            border: 4px solid #F48FB1;
+            border-radius: 28px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        .card.solo { padding: 84px 28px 28px; }
+        .card.duo  { padding: 40px 24px 26px; }
+
+        .card::before {
+            content: '💗';
+            position: absolute;
+            top: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 30px;
+            line-height: 1;
+        }
+        .card::after {
+            content: '🌸';
+            position: absolute;
+            bottom: 10px;
+            right: 14px;
+            font-size: 18px;
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        .card h2 {
+            font-size: 1.55rem;
+            font-weight: 900;
+            color: #1B5E20;
+            text-align: center;
+            line-height: 1.3;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            font-size: 0.82rem;
+            color: #999;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        /* ── BUTTONS ── */
+        .btn-row {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            margin-top: 26px;
+            position: relative;
+            min-height: 52px;
+        }
+
+        button {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            padding: 13px 22px;
+            line-height: 1;
+        }
+        button:hover  { transform: scale(1.06); }
+        button:active { transform: scale(0.96) !important; }
+
+        .btn-yes {
+            background: linear-gradient(135deg, #69BB6A 0%, #2E7D32 100%);
+            color: #fff;
+            box-shadow: 0 5px 16px rgba(46, 125, 50, 0.4);
+            flex: 1;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .btn-no {
+            background: linear-gradient(135deg, #EF5350 0%, #B71C1C 100%);
+            color: #fff;
+            box-shadow: 0 5px 16px rgba(183, 28, 28, 0.35);
+            flex: 1;
+            position: relative;
+            z-index: 200;
+            /* Transitions for tadpole shrink/expand */
+            transition: transform 0.15s ease, box-shadow 0.15s ease,
+                        width 0.22s ease, height 0.22s ease,
+                        border-radius 0.22s ease, padding 0.22s ease,
+                        font-size 0.15s ease;
+        }
+
+        /* Tadpole shape — blue */
+        .btn-no.tadpole {
+            width: 44px !important;
+            height: 44px !important;
+            min-width: 44px !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            font-size: 0 !important;
+            color: transparent !important;
+            pointer-events: none !important;
+            overflow: visible !important;
+            background: linear-gradient(135deg, #64B5F6 0%, #1565C0 100%) !important;
+            box-shadow: 0 4px 14px rgba(21,101,192,0.45) !important;
+        }
+        /* Googly eye — sits on the right-hand face of the tadpole */
+        .tadpole-eye {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            border: 1.5px solid rgba(21,101,192,0.2);
+            right: 2px;
+            top: 5px;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        .tadpole-eye::after {
+            content: '';
+            position: absolute;
+            width: 7px;
+            height: 7px;
+            background: #0d1b2a;
+            border-radius: 50%;
+            right: 0;
+            top: 3px;
+        }
+        /* Smile */
+        .tadpole-mouth {
+            position: absolute;
+            width: 9px;
+            height: 5px;
+            border: 2px solid rgba(0,0,0,0.5);
+            border-top-color: transparent;
+            border-radius: 0 0 7px 7px;
+            right: 5px;
+            bottom: 7px;
+            pointer-events: none;
+        }
+
+        /* Tadpole tail — on the LEFT so the head points RIGHT (toward target direction).
+           The JS rotate(angle) turns the whole tadpole to face its target. */
+        .btn-no.tadpole::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -18px;
+            right: auto;
+            transform: translateY(-50%);
+            width: 22px;
+            height: 9px;
+            background: linear-gradient(to left, #1565C0 40%, transparent);
+            border-radius: 50% 0 0 50%;
+            clip-path: polygon(100% 20%, 0% 50%, 100% 80%);
+            animation: tailWag 0.12s infinite alternate;
+        }
+        @keyframes tailWag {
+            from { transform: translateY(-50%) rotate(-22deg); }
+            to   { transform: translateY(-50%) rotate(22deg); }
+        }
+
+        .btn-pink {
+            background: linear-gradient(135deg, #F48FB1 0%, #AD1457 100%);
+            color: #fff;
+            box-shadow: 0 5px 16px rgba(173, 20, 87, 0.35);
+            width: 100%;
+            padding: 15px;
+            margin-top: 18px;
+            font-size: 1.05rem;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+        }
+        .btn-pink:disabled {
+            background: linear-gradient(135deg, #C8B8C0 0%, #9E8896 100%);
+            box-shadow: none;
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+        .btn-pink:disabled:hover,
+        .btn-pink:disabled:active { transform: none !important; }
+
+        .btn-col {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 22px;
+        }
+        .btn-location {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn-green {
+            background: linear-gradient(135deg, #66BB6A 0%, #2E7D32 100%);
+            color: #fff;
+            box-shadow: 0 5px 16px rgba(46,125,50,0.35);
+        }
+        .btn-blue {
+            background: linear-gradient(135deg, #42A5F5 0%, #1565C0 100%);
+            color: #fff;
+            box-shadow: 0 5px 16px rgba(21,101,192,0.35);
+        }
+
+        /* ── OPTION CARDS (Page 2) ── */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 11px;
+        }
+
+        .option-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #fff;
+            border: 2.5px solid #ECECEC;
+            border-radius: 16px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.12s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .option-card:hover { background: #FFF0F5; border-color: #F48FB1; }
+        .option-card.selected {
+            background: #FFF0F8;
+            border-color: #EC407A;
+            box-shadow: 0 0 0 2.5px rgba(236,64,122,0.18);
+        }
+        .option-card.selected .check { opacity: 1; transform: scale(1); }
+
+        .opt-img {
+            width: 76px;
+            height: 76px;
+            border-radius: 12px;
+            object-fit: cover;
+            object-position: center 30%;
+            flex-shrink: 0;
+            background: #FFE0F0;
+        }
+
+        .opt-label {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #2D2D2D;
+            flex: 1;
+            line-height: 1.3;
+        }
+
+        .check {
+            font-size: 22px;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: opacity 0.2s, transform 0.2s;
+            flex-shrink: 0;
+        }
+
+        /* ── DATE INPUTS (Page 4) ── */
+        .date-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            border: 2.5px solid #F48FB1;
+            border-radius: 14px;
+            padding: 13px 18px;
+        }
+        .input-row .icon { font-size: 26px; flex-shrink: 0; }
+        .input-row input {
+            border: none;
+            outline: none;
+            font-family: 'Nunito', sans-serif;
+            font-size: max(1rem, 16px);
+            font-weight: 700;
+            color: #333;
+            width: 100%;
+            background: transparent;
+        }
+
+        @media (min-height: 780px) {
+            body { align-items: center; }
+        }
+
+        /* ── SMALL PHONES (< 375 px) ── */
+        @media (max-width: 374px) {
+            .char-wrap.solo        { margin-bottom: -56px; }
+            .char-wrap.solo img    { width: 150px; height: 150px; }
+            .char-wrap.duo         { margin-bottom: -16px; }
+            .char-wrap.duo img     { height: 90px; }
+            .card.solo             { padding: 56px 18px 20px; }
+            .card.duo              { padding: 30px 16px 18px; }
+            .card h2               { font-size: 1.28rem; }
+            .opt-img               { width: 58px; height: 58px; }
+            .opt-label             { font-size: 0.86rem; }
+            .options-list          { gap: 8px; }
+            .option-card           { padding: 8px 10px; gap: 10px; }
+            .btn-pink,
+            .btn-location          { padding: 13px; }
+        }
+
+        /* ── TAP FEEDBACK ── */
+        .option-card:active { background: #FFE4EF; transform: scale(0.97); }
+    </style>
+</head>
+<body>
+
+<div class="scene">
+
+    <!-- ═══════════════ PAGE 1 ═══════════════ -->
+    <div id="page-1" class="page active">
+        <div id="frog-speech" class="speech-bubble">I knew you'd say yes! 💚</div>
+        <div class="char-wrap solo">
+            <img id="frog-img" src="images/frog-happy.png" alt="Frog" fetchpriority="high" decoding="async">
+        </div>
+        <div class="card solo">
+            <h2>Will you go on a date with me? 🐸</h2>
+            <div class="btn-row" id="p1-buttons">
+                <button class="btn-yes" onclick="onYesClick()">💚 Yes, absolutely!</button>
+                <button class="btn-no" id="btn-no" onclick="moveNoButton()">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ PAGE 2 ═══════════════ -->
+    <div id="page-2" class="page">
+        <div class="char-wrap duo">
+            <img src="images/frogs-peaking.png" alt="Frogs" loading="lazy" decoding="async">
+        </div>
+        <div class="card duo">
+            <h2>What do you want to do? ✨</h2>
+            <p class="subtitle">Multiple selections possible</p>
+
+            <div class="options-list" id="options-container">
+
+                <div class="option-card" data-id="1" onclick="selectOption(this)">
+                    <img class="opt-img" src="images/option-waterpark.png" alt="" loading="lazy" decoding="async">
+                    <span class="opt-label">Water &amp; Amusement Park</span>
+                    <span class="check">✅</span>
+                </div>
+
+                <div class="option-card" data-id="2" onclick="selectOption(this)">
+                    <img class="opt-img" src="images/option-inventing.png" alt="" loading="lazy" decoding="async">
+                    <span class="opt-label">Invent something together</span>
+                    <span class="check">✅</span>
+                </div>
+
+                <div class="option-card" data-id="3" onclick="selectOption(this)">
+                    <img class="opt-img" src="images/option-cozy.png" alt="" loading="lazy" decoding="async">
+                    <span class="opt-label">Cozy movie night&nbsp;/ pet the chickens &amp; cats</span>
+                    <span class="check">✅</span>
+                </div>
+
+                <div class="option-card" data-id="4" id="spicy-card" onclick="selectOption(this)">
+                    <img class="opt-img" src="images/option-spicy.png" alt="" loading="lazy" decoding="async">
+                    <span class="opt-label">Spicy Stuff 🌶️</span>
+                    <span class="check">✅</span>
+                </div>
+
+            </div>
+
+            <button class="btn-pink" id="btn-next-p2" onclick="nextPage(3)" disabled>Next&nbsp;→</button>
+        </div>
+    </div>
+
+    <!-- ═══════════════ PAGE 3 ═══════════════ -->
+    <div id="page-3" class="page">
+        <div class="card duo">
+            <h2>Your place or mine? 🏡</h2>
+            <div class="btn-col">
+                <button class="btn-location btn-green" onclick="saveLocation('Your place'); nextPage(4)">🏠&nbsp;&nbsp;Your place</button>
+                <button class="btn-location btn-blue"  onclick="saveLocation('My place'); nextPage(4)">🏢&nbsp;&nbsp;My place</button>
+            </div>
+        </div>
+        <div class="char-wrap duo">
+            <img src="images/frogs-together.png" alt="Frogs" loading="lazy" decoding="async">
+        </div>
+    </div>
+
+    <!-- ═══════════════ PAGE 4 ═══════════════ -->
+    <div id="page-4" class="page">
+        <div class="card duo">
+            <h2>When are you free? 📅</h2>
+            <div class="date-inputs">
+                <div class="input-row">
+                    <span class="icon">📅</span>
+                    <input type="date" id="date-input">
+                </div>
+                <div class="input-row">
+                    <span class="icon">⏰</span>
+                    <input type="time" id="time-input">
+                </div>
+            </div>
+            <button class="btn-pink" onclick="finishAsking()">Send!&nbsp;💌</button>
+        </div>
+        <div class="char-wrap duo">
+            <img src="images/frogs-together.png" alt="Frogs" loading="lazy" decoding="async">
+        </div>
+    </div>
+
+</div><!-- .scene -->
+
+<script>
+    let hasSelectedSomething = false;
+    let noPlaceholder = null;
+    const choiceData = { activities: [], location: '', date: '', time: '' };
+
+    function nextPage(n) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById('page-' + n).classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* "Yes" — frog becomes happy, hops with joy, speech bubble appears, then page 2 */
+    function onYesClick() {
+        const frogImg = document.getElementById('frog-img');
+        // Switch to happy in case "No" was clicked before
+        frogImg.src = 'images/frog-happy.png';
+        // Play hop animation (overrides the continuous bob while it runs)
+        frogImg.style.animation = 'frogJump 1s cubic-bezier(0.36, 0.07, 0.19, 0.97) forwards';
+        setTimeout(() => { frogImg.style.animation = ''; }, 1050);
+
+        // Show speech bubble a moment after the jump starts
+        setTimeout(() => {
+            document.getElementById('frog-speech').classList.add('visible');
+        }, 300);
+
+        // Navigate to page 2 after the bubble has been visible for a moment
+        setTimeout(() => nextPage(2), 2400);
+    }
+
+    /* "No" — shrink to tadpole in place, swim to new spot, expand back to button */
+    function moveNoButton() {
+        const btn  = document.getElementById('btn-no');
+        const frog = document.getElementById('frog-img');
+        frog.src = 'images/frog-sad.png';
+
+        // Phase 1 — capture position BEFORE any DOM changes (placeholder insertion
+        // would cause a flex reflow that shifts the button, so we read rect first)
+        const r = btn.getBoundingClientRect();
+
+        // First click only: insert a spacer so the Yes-button doesn't expand to fill the gap
+        if (!noPlaceholder) {
+            noPlaceholder = document.createElement('div');
+            noPlaceholder.style.cssText =
+                'display:inline-block;width:' + r.width + 'px;height:' + r.height + 'px;flex-shrink:0;';
+            btn.parentNode.insertBefore(noPlaceholder, btn.nextSibling);
+        }
+
+        // Pin button at its original screen position (before the flex reflow above)
+        btn.style.position  = 'fixed';
+        btn.style.left      = r.left + 'px';
+        btn.style.top       = r.top  + 'px';
+        btn.style.width     = r.width + 'px';
+        btn.style.margin    = '0';
+        btn.style.zIndex    = '9999';
+        btn.style.transform = '';
+        void btn.offsetWidth; // flush so fixed-position applies before class change
+
+        // Phase 2 — shrink into tadpole and reveal the face
+        btn.classList.add('tadpole');
+        btn.innerHTML = '<span class="tadpole-eye"></span><span class="tadpole-mouth"></span>';
+
+        // Phase 3 — swim to a new random position (after shrink animation ~240ms)
+        setTimeout(() => {
+            const pad = 70;
+            const nx = pad + Math.random() * (window.innerWidth  - pad * 2);
+            const ny = pad + Math.random() * (window.innerHeight - pad * 2);
+
+            // Point the tadpole toward its target
+            const cx = parseFloat(btn.style.left) + 22;
+            const cy = parseFloat(btn.style.top)  + 22;
+            const angle = Math.atan2(ny - cy, nx - cx) * (180 / Math.PI);
+
+            btn.style.transition = 'left 0.58s ease-in-out, top 0.58s ease-in-out, transform 0.22s ease';
+            btn.style.transform  = 'rotate(' + angle + 'deg)';
+            btn.style.left = nx + 'px';
+            btn.style.top  = ny + 'px';
+        }, 240);
+
+        // Phase 4 — arrived: rotate upright, remove face, expand back to button
+        setTimeout(() => {
+            btn.style.transition = 'width 0.22s ease, height 0.22s ease, border-radius 0.22s ease, padding 0.22s ease, font-size 0.15s ease, transform 0.2s ease';
+            btn.style.transform  = 'rotate(0deg)';
+            btn.classList.remove('tadpole');
+            btn.innerHTML = 'No';
+            setTimeout(() => {
+                btn.style.width      = '';
+                btn.style.transition = '';
+            }, 240);
+        }, 240 + 620);
+    }
+
+    /* Snapshot original option card HTML for the reset mechanic */
+    const originalCards = Array.from(
+        document.querySelectorAll('.option-card')
+    ).map(c => ({ el: c, id: c.getAttribute('data-id'), html: c.innerHTML }));
+
+    function resetOptionCards() {
+        originalCards.forEach(s => {
+            s.el.innerHTML = s.html;
+            s.el.setAttribute('data-id', s.id);
+            s.el.classList.remove('selected');
+        });
+        hasSelectedSomething = false;
+    }
+
+    function updateNextButton() {
+        const anySelected = document.querySelectorAll('.option-card.selected').length > 0;
+        document.getElementById('btn-next-p2').disabled = !anySelected;
+    }
+
+    /* First non-spicy click swaps that card with the spicy card, then selects it.
+       Deselecting spicy always resets all cards. */
+    function selectOption(el) {
+        const id        = el.getAttribute('data-id');
+        const spicyCard = document.getElementById('spicy-card');
+
+        if (!hasSelectedSomething && id !== '4') {
+            // First interaction: swap clicked card with spicy, select spicy
+            hasSelectedSomething = true;
+            const tmp = el.innerHTML;
+            el.innerHTML = spicyCard.innerHTML;
+            spicyCard.innerHTML = tmp;
+            el.setAttribute('data-id', '4');
+            spicyCard.setAttribute('data-id', id);
+            el.classList.add('selected');
+        } else {
+            const wasSelected = el.classList.contains('selected');
+            el.classList.toggle('selected');
+
+            // Deselecting spicy → reset everything
+            if (id === '4' && wasSelected) {
+                resetOptionCards();
+                updateNextButton();
+                return;
+            }
+
+            const anySelected = document.querySelectorAll('.option-card.selected').length > 0;
+            if (anySelected) {
+                hasSelectedSomething = true;
+            } else {
+                resetOptionCards();
+            }
+        }
+        updateNextButton();
+    }
+
+    function saveLocation(loc) {
+        choiceData.location = loc;
+    }
+
+    function finishAsking() {
+        const d = document.getElementById('date-input').value;
+        const t = document.getElementById('time-input').value;
+        if (!d || !t) {
+            alert('Please pick a date and time first! 🐸');
+            return;
+        }
+        choiceData.date = d;
+        choiceData.time = t;
+        choiceData.activities = [];
+        document.querySelectorAll('.option-card.selected').forEach(c => {
+            choiceData.activities.push(c.querySelector('.opt-label').innerText);
+        });
+
+        const dateStr = new Date(d + 'T' + t).toLocaleString('en-US', {
+            weekday: 'long', day: '2-digit', month: 'long',
+            year: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        alert(
+            `Yay! The date is planned! 🐸💚\n\n` +
+            `💚 Activities: ${choiceData.activities.join(', ') || '–'}\n` +
+            `🏠 Location: ${choiceData.location || '–'}\n` +
+            `📅 When: ${dateStr}\n\n` +
+            `Take a screenshot and send it to me! 💌`
+        );
+    }
+</script>
+</body>
+</html>
