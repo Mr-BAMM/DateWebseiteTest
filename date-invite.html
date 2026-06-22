@@ -58,6 +58,15 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
+        /* Pages 3 & 4 use opacity-only fade so position:fixed frogs
+           are not displaced by the transform during the animation */
+        #page-3.active,
+        #page-4.active { animation: fadeInOnly 0.4s ease; }
+        @keyframes fadeInOnly {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
         /* ── SPEECH BUBBLE (page 1) ── */
         /* Always in flow so the frog/card never shift when the bubble appears */
         .speech-bubble {
@@ -130,22 +139,32 @@
 
         #page-2 .char-wrap.duo img { object-position: center top; }
 
-        /* Pages 3 & 4: frogs fixed at lower third of viewport, sitting on the pond */
+        /* Pages 3 & 4: frogs fixed at lower area, sitting on the pond */
         #page-3 .card.duo,
-        #page-4 .card.duo { padding-top: 22px; }
+        #page-4 .card.duo {
+            padding-top: 22px;
+            margin-top: 16px;
+        }
 
         #page-3 .char-wrap.duo,
         #page-4 .char-wrap.duo {
             position: fixed;
-            bottom: 12%;
+            bottom: 6%;
             left: 50%;
             transform: translateX(-50%);
             width: 100%;
             max-width: 420px;
             margin: 0;
         }
+
+        /* Show full frog image, no cropping */
         #page-3 .char-wrap.duo img,
-        #page-4 .char-wrap.duo img { object-position: center 40%; }
+        #page-4 .char-wrap.duo img {
+            height: auto;
+            max-height: 200px;
+            object-fit: contain;
+            object-position: center bottom;
+        }
 
         @keyframes frogBob {
             from { transform: translateY(0px); }
